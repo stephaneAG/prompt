@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<style>
+#planner #change_title_dialog, #planner #confirm_delete_dialog {
+background-color: #eee;
+//color: #494949; /*color: black;*/
+border: 1px solid black;
+padding: 25px;
+position: absolute;
+top: 50%;
+left: 50%;
+margin-top: -100px; 
+margin-left: -150px;
+width: 300px;
+}
+#planner .dialog_buttons {
+    text-align: right;
+}
+
+.fakePrompt {
+  position: absolute;
+  top: 35%; /*top: 162px;*/ /*top: 160px;*/ /*top: 200px;*/
+  background: white;/*background: #333;*/
+  padding: 20px;
+  border: 1px solid #999;
+  width: 250px; /*width: 300px;*/
+  left: 50%; /*left: 50%;*/
+  margin-left: -147px; /*margin-left: -150px;*/
+  text-align: center;
+
+  color: #494949; /*color: black;*/
+  //color: #757575; /* clean but a littl( light for my taste */
+  //color: #5F5F5F;
+  z-index: 3; /*z-index: 2;*/
+}
+.fakePromptBckgrnd{
+  content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    //background: rgba(0,0,0,0.4); /*BCKGRND*/
+    background: #8E8F90;/* if using a page entirely white :p */
+    z-index: -1;
+    pointer-events: none;
+}
+
+.hidden { 
+  //display: none; 
+}
+
+/*
+input[type="button"]:before {
+  content: "// ";
+  position: relative;
+  left: -1px;
+}
+*/
+input[type=text] {
+  //padding:5px 30px;
+  padding-left: 5px;
+  margin-bottom: 20px;
+  
+  //background:#D9D9D9; 
+  //border:0 none;
+  //cursor:pointer;
+  //-webkit-border-radius: 5px;
+  //border-radius: 5px;
+}
+input[type=text].noExtraSpace {
+  margin-bottom: 0px;
+}
+
+
+input[type=button] {
+  padding:5px 30px; background:#D9D9D9; border:0 none;
+  //cursor:pointer;
+  //-webkit-border-radius: 5px;
+  //border-radius: 5px;
+}
+input[type=button]:hover {
+  padding:5px 30px; /*background:#ccc;*/ background: #E8E8E8; border:0 none;
+  //-webkit-border-radius: 5px;
+  //border-radius: 5px;
+}
+
+.dialogSection {
+  //background: blue;
+}
+.dialogSection.noButtons{
+  //background: red;
+  margin-bottom: -20px;
+  //padding-bottom: 20px;
+}
+
+.dialogSpacer.fullWidth, .dialogSpacer.oneThirdWidth, .dialogSpacer.halfWidth{ 
+  margin-top: 20px; 
+  height: 1px; 
+  //background: blue; /* also gives a subtle tint to the spacer, but not desired right now -> to use for WP admin stuff ;D */
+  box-shadow:    inset 0 0 5px /*10px*/ #D9D9D9; /*#000000*/ /* subtile but present */
+}
+
+.dialogSpacer.extraSpace{
+  margin-top: 30px; /* a littl' extra spae if we chose to display a separator/spacer after the 'main notice' */
+}
+
+.dialogSpacer.fullWidth { 
+  //margin-left: -150px;
+  //width: 300px;
+}
+.dialogSpacer.halfWidth{ 
+  //width: 50%; /* left aligned, not deleted because it could be useful some time .. */
+  margin-left: 55px;
+  width: 150px;
+}
+.dialogSpacer.oneThirdWidth { 
+  //width: 33%; /* left aligned, not deleted because it could be useful some time .. */
+  margin-left: 75px;
+  width: 100px;
+  
+}
+.dialogSpacer.headerSpacer { margin-bottom: 30px; }
+
+#mainBtnsContainer, #mainNotiveContainer{
+  //width: 290px;
+  //height: 50px;
+  margin-top: 20px; /*margin-top: -20px;*/
+  margin-left: -20px;
+  margin-right: -20px;
+  margin-bottom: -20px;
+  padding: 20px;
+  left: 0px;
+  top: 0px;
+  background: #F2F2F2;
+}
+#mainNotiveContainer { margin-bottom: 10px; /*margin-bottom: 0px;*/ /*margin-bottom: 20px; -> was just a littl' bit excessive ;) */ }
+
+.shadow {
+  box-shadow:    inset 0 0 5px /*10px*/ #D9D9D9; /*#000000*/ /* subtile but present */
+  //-moz-box-shadow:    inset 0 0 10px /*10px*/ #BDBDBD; /*#000000*/
+  //-moz-box-shadow:    inset 0 0 10px /*10px*/ #000000; /*#000000*/
+  //-webkit-box-shadow: inset 0 0 1px /*10px*/ #D9D9D9; /*#000000*/
+  //box-shadow:         inset 0 0 1px /*10px*/ #D9D9D9; /*#000000*/
+}
+
+/* to be able to customize some of the input's placeholders ( at least the one(s) related to colors -> ex: for the color of the prompt or the one of it's backround )*/
+::-webkit-input-placeholder {
+   //color: red;
+}
+:-moz-placeholder { /* Firefox 18- */
+   //color: red;  
+}
+::-moz-placeholder {  /* Firefox 19+ */
+  //color: red;  
+}
+
+/* more restrictive than the above, as wanted, and still working :P */
+/* and indeed also works with the follwing: document.styleSheets[0].insertRule('input[type=text]::-moz-placeholder { color: yellow !important }', 0);*/
+input[type=text]::-webkit-input-placeholder {
+   //color: blue;
+}
+input[type=text]:-moz-placeholder { /* Firefox 18- */
+   //color: blue;  
+}
+input[type=text]::-moz-placeholder {  /* Firefox 19+ */
+  //color: blue;  
+}
+
+/* even more restrictive test - perfect for stuff that needs to be updated on the fly using js ;D */
+/* yet, couldn't make it work using the following: document.styleSheets[0].insertRule('input[name="promptSettings_color"]::-moz-placeholder{ color: "' + 'yellow' + '" !important }', 0); */
+/* got it, trickety hackily: 
+   A: document.styleSheets[0].deleteRule(23); // our helper can .. help in order to get a css rule index from a selector text => cssRuleIndexFromSelector('input[name="promptSettings_color"]::-moz-placeholder')
+   B: document.styleSheets[0].insertRule('input[name="promptSettings_color"]::-moz-placeholder { color: green !important; }', 0);
+*/
+input[name="promptSettings_color"]::-moz-placeholder{
+  color: #BADA55; /* not set, it'll use the default grayish, which is the excpected behavior ;) */
+}
+
+/* adding below version, we can keep 'static' ( above ) properties unchanged while keeping the placeholder color dynamic ;p - hence, the folowing rule will be added, removed, & bis bis repetita when modified */
+/* nb: R -> learned the 'hard' way ( aka using document.styleSheets[0].cssRules[25] ): use the less-intuitiveèjavascript-naming-order for the following selector ;p */
+/*     aka: won't work in javascript: Typer.cssRuleIndexFromSelector('input[name="promptSettings_color"].dynamic::-moz-placeholder');
+            will work in javascript: Typer.cssRuleIndexFromSelector('input.dynamic[name="promptSettings_color"]::-moz-placeholder');
+       hence: won't work: Typer.removeCssRule('input[name="promptSettings_color"].dynamic::-moz-placeholder');
+              will work: Typer.removeCssRule('input.dynamic[name="promptSettings_color"]::-moz-placeholder');
+*/
+/*input[name="promptSettings_color"].dynamic::-moz-placeholder{*/
+input.dynamic[name="promptSettings_color"]::-moz-placeholder{
+  //color: #00DBFF; /* not set, it'll default to the non-.dynamic version ( if set: ex #BADA55 ), which is the excpected behavior ;) */
+}
+/* Thnk: now wondering if we could also:
+   - specify attr(data-attr_color) in above rule or an additional
+   - use a littl more advanced yet neat color preview in placeholder: '#color' -> default, grayish color, followed by '(' + 'color preview' -> in the actual color + ')' 
+*/
+
+/* debug code yo see if I can be hack around to change only the color of some stuff used as 'content' property of a pseudo element :after or :before -> pfff ;D */
+/* said to be working: input[type="text"]::-webkit-input-placeholder:before { css code } */
+/*testing said-to-be-working-one ..*/
+input[type="text"]::-webkit-input-placeholder:after { 
+  content: "Tefouuuu"; 
+  /*
+  color: green; 
+  position: absolute;
+  top: 0;
+  height: 10px;
+  width: 30px;
+  background: red;
+  left: 0;
+  */
+}
+/* were-not-working-and-still-aint't-ones */
+input.dynamic[name="promptSettings_color"]:before {
+  //content: 'welcome'; /*content: attr(data-attr_color);*/ /* R: needs corresponding html data-attr_color="<css color>" */
+  //position: absolute;
+  //top: 0px;
+  //right: 12px;
+}
+input.dynamic[name="promptSettings_color"]:before {
+  //color: blue; /* dynamically changed using javascript & that could rely on some data-attr_color="<css color>" if needed ( -> aka, if the js-side didn't use values but data-attr stuff ( .. ) ) */
+}
+/* the following as the should-be-working version of the wip above ones */
+input[name="promptSettings_color"]::-moz-placeholder:after{
+  content: 'welcome';
+  color: blue;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+}
+input.dynamic[name="promptSettings_color"]::-moz-placeholder::before{
+  
+}
+
+
+pre:after {
+  //content: attr(rel);
+  //position: absolute;
+  //top: 48px; /*top: 22px; -> also quite neat, a little above the notive */
+  //right: 12px;
+}
+pre:after {
+  content: attr(data-attr_info);
+  position: absolute;
+  top: 124px; /*top: 22px; -> also quite neat, a little above the notive */
+  right: 10px; /* just to make sure it's not implemented : try calc(50% - attr(width) ); & calc(50% - attr(data-attr_size) );*/
+  //text-align: center;
+  //width: 100%;
+  //color: #00DBFF;
+}
+pre:before {
+  content: attr(data-attr_code);
+  position: absolute;
+  top: 163px; /*top: 22px; -> also quite neat, a little above the notive */ /* R: WE COULD DO SOME NICE 'MULTIPLY' LOGS & STUFF WITH :before & :after in different colors ;) */
+  left: 0px; /* just to make sure it's not implemented : try calc(50% - attr(width) ); & calc(50% - attr(data-attr_size) );*/
+  text-align: center;
+  width: 100%;
+  color: #00DBFF; /* this will be changed using js and the .dynamic class as below - if commented out, default to grayish */
+}
+/* the below one should work dynamically flawlessly as relying on the same mechanism as the placeholder stuff - may also benefit for a dedicated fcn for some 'main' notice, or even any other notice */
+/* R: todo: test if we can use it's attribute data-attr_color directly within the css to get it's color changed or if we 'd have to rely on js to even get it in the first place 
+      => also, I just rememberd that I already had a fcn [half-?]written that uses getComputedStyle() to get the color in rgb format -> indeed useful if we just widh to apply it ( & not display what was typed )
+*/
+/* working but disabled cause too general for my current testing of te main notice pre containing code that needs to be colored */
+pre.dynamic:before {
+  //color: purple; /* applies fine using css - needs to be tested using stylesheet herlers / dedicated fcn in js */
+  //color: attr(data-attr_color); /* this DOESN'T work :/ */
+}
+/* while the above applies for all pre, we can choose to specify a parent ( the main notice ), but here i chosed to use it's id, as well as in js
+   hence, the js part of the trick looks like so:
+   
+   Typer.removeCssRule('pre#main-notice-pre.dynamic' + '::before');
+   Typer.addCssRule('pre#main-notice-pre.dynamic' + '::before', '{ color: ' + 'purple' + ' !important; }');
+
+*/
+/* main notice pre dynamic code color */
+pre#main-notice-pre.dynamic:before {
+  color: #BADA55; /* works fine - tested & just needs dedicated fcn in js */
+}
+
+
+/* /!\ R: the above needs a fix due to the addition of the below header :/ .. */
+
+p.promptHeader{
+  display: block;
+  bottom: 0px;
+  margin-bottom: 30px;
+}
+
+.mybtn {
+  //text-align: center;     
+}
+
+.mybtn:before, .mybtn:after {
+  //font-family: "Some cool font with glyphs", serif;
+  //content: "\00d7";  /* Some fancy character */
+  //color: #c83f3f;
+}
+/*
+.mybtn:before {
+  margin-right: 10px;
+}
+.mybtn:after {
+  margin-left: 10px;
+}
+*/
+/*
+.fakePrompt:after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: -1;
+    pointer-events: none;
+}
+*/
+/*
+.fakePrompt:hover:after {
+    z-index: 1; 
+    background: rgba(0,0,0,0.75);
+}
+*/
+</style>
+</head>
+
+
+<body>
+
+<!-- STUFF -->
+
+<div class="fakePrompt">
+    
+    <!-- <div id="PromptHeader" class="shadow"></div> -->
+    <p class="promptHeader">Tef prompt</p>
+    <!-- <div class="dialogSpacer fullWidth"></div> -->
+    <!-- <div class="dialogSpacer halfWidth"></div> -->
+    <div class="dialogSpacer oneThirdWidth headerSpacer"></div>
+    
+    <div id="mainNotiveContainer" class="shadow"> <!-- R: add variants ( aka not fullwidt notices ;) ) -->
+      <!-- NOTICE -->
+      <!-- class="dynamic" --> <!-- R: dynamic is used with js wrapper / also R: DON'T EVER PUT HTML COMMENTS IN A <PRE> OR IT WILL MESS UP WITH THE :before & :after -->
+      <pre id="main-notice-pre" rel="CSS" data-attr_info="[console preview]" data-attr_code=".mybrain:after { tef: tired; }" class="dynamic" data-attr_color="cyan">
+This is the 'main' prompt notice
+</pre> <!-- .mybrain:after { tef: tired; }</pre> => now displayed using dynamic color vith js ;p -->
+    </div>
+    
+    <!-- <div class="dialogSpacer fullWidth extraSpace"></div> --> <!-- can help divide the content if other stuff may reside right below the 'main notice' -->
+    <!-- <div class="dialogSpacer halfWidth"></div> -->
+    <!-- <div class="dialogSpacer oneThirdWidth"></div> -->
+
+    <!-- PROMPT SETTINGS DIALOG -->
+    <div id="prompt_settings_dialog" class="dialogSection noButtons"> <!-- class="hidden" -->
+        <p>Content url ?</p>
+        <input class="noExtraSpace" name="promptSettings_url" type="text" value="Typer.file" placeholder="default">
+        <p>Typing speed ?</p>
+        <input class="noExtraSpace" name="promptSettings_speed" type="text" value="Typer.speed" placeholder="default">
+        <p>Prompt color ?</p>
+        <!-- R: .dynamic allows to have both dynamic & static pseudo elements properties ;) -->
+        <!--    we could presumably have set stuff using one rule mixing :after & ::moz stuff, but having two different allows for more flexibility ( and was already done first ;p ) -->
+        <input class="dynamic" data-attr_color="cyan" name="promptSettings_color" type="text" value="Typer.color" placeholder="#BADA55"> <!-- placeholder="default" see CSS above for #BADA55 locations -->  
+        <p>Prompt background ?</p>
+        <input class="dynamic" name="promptSettings_background" type="text" value="" placeholder="#F2F2F"> <!-- placeholder="default" to use the default grayish color -->
+    </div>
+
+    <div class="dialogSpacer fullWidth"></div>
+    <!-- <div class="dialogSpacer halfWidth"></div> -->
+    <!-- <div class="dialogSpacer oneThirdWidth"></div> -->
+
+    <!-- CHANGE TITLE DIALOG -->
+    <div id="change_title_dialog" class="dialogSection"> <!-- class="hidden" -->
+        <p>Please name your new planner</p>
+        <input name="title" type="text" value="#fw.planner.title#">
+        <div class="dialog_buttons">
+            <input id="cancel_change_title" class="mybtn" type="button" name="cancel_change_title" value="Cancel" onmousedown="this.form.elements.title.value=='#fw.planner.title#';hideLayer('change_title_dialog')">
+            <input id="confirm_change_title" class="mybtn"  type="button" name="confirm_change_title" value="OK" onmousedown="hideLayer('change_title_dialog');confirmTitleChange()">
+        </div>
+    </div>
+
+    <div class="dialogSpacer fullWidth"></div>
+    <!-- <div class="dialogSpacer halfWidth"></div> -->
+    <!-- <div class="dialogSpacer oneThirdWidth"></div> -->
+
+    <!-- CONFIRM DELETE DIALOG -->
+    <div id="confirm_delete_dialog" class="hidden dialogSection">
+        <p>Are you sure you want to delete this planner?</p>
+        <div class="dialog_buttons">
+            <input id="cancel_delete" class="mybtn"  type="button" name="cancel_delete" value="Cancel" onmousedown="hideLayer('confirm_delete_dialog')">
+            <input id="confirm_delete" class="mybtn"  type="button" name="confirm_delete" value="OK" onmousedown="confirmDelete()">
+        </div>
+    </div>
+
+
+  <div id="mainBtnsContainer" class="shadow">
+    <!-- FORM ACTIONS -->
+    <input class="mybtn" type="button" name="Delete" value="Cancel" onmousedown="Typer.dirtySettingsCheck()"> <!-- Typer.discardSettingsPrompt() --> <!-- onmousedown="showLayer('confirm_delete_dialog')" -->
+    <input class="mybtn" type="button" name="Rename" value="OK" onmousedown="Typer.validateSettingsPrompt()"> <!--  onmousedown="showLayer('change_title_dialog')" -->
+  </div>
+
+</div> <!-- div.fakePrompt -->
+<div class="fakePromptBckgrnd"></div>
+<!-- STUFF END --> 
+
+
+<!-- palceholder for the Hacker Typer console -->
+<div id="console">am I a console ?</div>
+
+
+
+<!-- Futur Js code for HackerTyper ;) -->
+<script type="text/javascript">
+  var Typer = {
+    text: null,
+    index: 0, // current cursor position
+    speed: 2, // speed of the Typer
+    settingsPromptVisible: true, // to be able to easily toggle the prompt from a keyboard shortcut - R: during debug, we start with promp VISIBLE => true ;p
+    
+    // reload Hacker Typer
+    // nb: modified reload fcn ( from the 'modded Typer POC' )
+    reload: function (speed, text, color) {
+      document.querySelector("#console").innerHTML = '';
+      this.index = 0;
+      this.file = '/_/misc/kernel.txt',
+      this.speed = speed;
+      this.text = text;
+      this.color = color;
+    },
+
+    initSettingsPrompt: function(){
+      // set initial color of stuff here if needed / not done via css already
+      // init the keyboard event listener
+      var theTyperInstance = this;
+      //TODO: maybe bere more explicit ( aka check visibility of the prompt / some of its parts before validating, discarding, or acting anyway .. )
+      //      also, Thnk & maybe try implementing the 'clicking on a standard confirm prompt using Esc then Tab & Esc then Alt Gr'  - => thnkn again, we also have Esc then Caps lock available ;D
+      document.onkeyup = function(evt){
+        console.log(evt.keyCode);
+        if (evt.keyCode == 18) { // key 18 = alt key 
+          console.log('Typer > alt key');
+          //evt.stopPropagation();
+          //theTyperInstance.
+        } else if (evt.keyCode == 225) { // key 225 = alt gr key 
+          console.log('Typer > alt key');
+          //evt.stopPropagation();
+          //theTyperInstance.validateSettingsPrompt(); // bad choice for typing the # char ( alt gr + '3') // TODO: thnk about using shift then caps lock or even esc the ntab , esc then .. 
+        } else if (evt.keyCode == 9) {// key 9 = tab key
+          console.log('Typer > tab key');
+          //theTyperInstance.
+        } else if (evt.keyCode == 20) {// key 20 = caps lock
+          console.log('Typer > caps lock');
+          theTyperInstance.toggleSettingsPrompt(); // toggle the settings prompt visibility
+        } else if (evt.keyCode == 27) { // key 27 = esc key 
+          console.log('Typer > esc key');
+          theTyperInstance.dirtySettingsCheck(); // check if any unsaved change  before discarding any & hide the prompt ( same as clicking on the main 'Cancel' button )
+        }
+        /*
+        if (evt.preventDefault && evt.keyCode != 122) { // prevent F11(fullscreen) from being blocked
+            evt.preventDefault();
+        }
+        if (evt.keyCode != 122) { // otherway prevent keys default behavior
+            evt.returnValue = false;
+        }
+        */
+      }
+    },
+
+    // toggle the settings prompt visibility - show if not visible / discard any unsaved changed ( & display an actual prompt ? ^^ ) if currently visible - to be called via keyboard shortcut 1
+    // we could also have a keyboard shortcut that'd save changes before toggling ( hiding ) the prompt - aka a keyboard shortcut 2
+    // in other words, the 1st shortcut 'd just toggle the visibility while the second 'd save the modified settings as well
+    // also, a third shortcut that 'd show an actual prompt before discarding stuff ( somehow same as hitting the 'main' Cancel button ) could be handy 
+    // .. & a fourth shortcut to revert to the initial settings may also be nice to have on hand [ ass well a such button right after the 'main' notice or at the end of the prompt ? ]
+    toggleSettingsPrompt(){
+      if( this.settingsPromptVisible == true ) this.hideSettingsPrompt();
+      else this.showSettingsPrompt();
+    },
+    
+    // display a custom prompt mimicking the browser's one ) that allows to change parameters
+    // R: we could also have used 'hidden = false' for the css property that got changed
+    showSettingsPrompt: function(){
+      this.settingsPromptVisible = true;
+      document.querySelector(".fakePrompt").style.display = '';
+      document.querySelector(".fakePromptBckgrnd").style.display = '';
+    },
+
+    // hide the custom prompt
+    // R: we could also have used 'hidden = true' for the css property that got changed
+    hideSettingsPrompt: function(){
+      this.settingsPromptVisible = false;
+      document.querySelector(".fakePrompt").style.display = 'none';
+      document.querySelector(".fakePromptBckgrnd").style.display = 'none';
+    },
+
+    // check if some input fields are 'dirty' ( only needed if there changes werent't already saved - for ex: hitting enter, focusing out, hitting tab, .. ? )
+    // ex: used when clicking on the main 'Cancel' button
+    dirtySettingsCheck: function(){
+      // to write: if one of the input is dirty, call the following, else discard directly without showing any prompt
+      this.confirmCancelSettings();
+      //this.discardSettingsPrompt(); // for now, just discard without standard prompt
+    },
+
+    // display a warning message that some fields are dirty using the standard prompt ( specifically, the confirm one )
+    // if the warning is cancelled, we do nothing, else we discard stuff using the appropriate helper / dedicated fcn
+    confirmCancelSettings: function(){
+      if ( window.confirm('Discard unsaved settings ?') ) this.discardSettingsPrompt();
+    },
+    
+    // helper for using pseudo elements for dynamic styling
+    /*
+function cssRuleIndexFromSelector(selectorText){
+  for(var i = 0; i <= document.styleSheets[0].cssRules.length; i++){
+    if( document.styleSheets[0].cssRules[i].selectorText == selectorText ) return i;
+    return -1; 
+  }
+}
+
+better, for wip
+
+function cssRuleIndexFromSelector(selectorText){
+  console.log( document.styleSheets[0].cssRules.length + 1 + 'rules present in first stylesheet' );
+  for(var i=0; i<= document.styleSheets[0].cssRules.length; i++){
+    console.log(i);
+    if( document.styleSheets[0].cssRules[i].selectorText == selectorText ) {
+      console.log(document.styleSheets[0].cssRules[i].cssText);
+      //return i;
+    }
+    //return -1;
+  }
+}
+
+
+function cssRuleIndexFromSelector(selectorText){
+  //console.log( document.styleSheets[0].cssRules.length + 1 + 'rules present in first stylesheet' );
+  for(var i=0; i<= document.styleSheets[0].cssRules.length; i++){
+    //console.log(i);
+    
+    try{ 
+      if( document.styleSheets[0].cssRules[i].selectorText == selectorText ) {
+        console.log(document.styleSheets[0].cssRules[i].cssText);
+        return i;
+      }
+    } catch(e) { return -1; }
+
+  }
+}
+
+cssRuleIndexFromSelector('input[name="promptSettings_color"]::-moz-placeholder');
+    */
+    // usage: Typer.cssRuleIndexFromSelector('input[name="promptSettings_color"]::-moz-placeholder')
+    // or better: Typer.cssRuleIndexFromSelector('input.dynamic[name="promptSettings_color"]::-moz-placeholder')
+    cssRuleIndexFromSelector: function (selectorText){
+      for(var i = 0; i <= document.styleSheets[0].cssRules.length; i++){
+        try{ 
+          if( document.styleSheets[0].cssRules[i].selectorText == selectorText ) {
+            //console.log(document.styleSheets[0].cssRules[i].cssText);
+            return i;
+          }
+        } catch(e) { return -1; } 
+      }
+    },
+
+    // remove a CSS rule by specifying it's selector - R: supports pseudo selectors ;)
+    // other helper consumed by the above ( should realy be included in the spec as it's possible to do so :/ .. were they tired of writing useful fcns ? .. )
+    // usage: Typer.removeCssRule('input[name="promptSettings_color"]::-moz-placeholder');
+    // or better: Typer.removeCssRule('input.dynamic[name="promptSettings_color"]::-moz-placeholder');
+    removeCssRule: function (selectorText){
+      // checks if the selector actually exist ( if the returned id is different than '-1' )
+      var ruleId = this.cssRuleIndexFromSelector(selectorText); // ex: 'input[name="promptSettings_color"]::-moz-placeholder'
+      // remove the rule which has it's i dassociated to that selector
+      if( ruleId != -1 ) document.styleSheets[0].deleteRule( ruleId ); // nb: could improve code a littl' bit by looking at EVERY stylesheet instead of just 1st one ( R: having most concat'd is better )
+    },
+
+    // add an entire CSS rule ( aka, specify properties within ) specifying it's selector - R: supports pseudo selectors ;)
+    // usage: usage: Typer.addCssRule('input[name="promptSettings_color"]::-moz-placeholder', '{ color: green !important; }')
+    // or better: usage: Typer.addCssRule('input.dynamic[name="promptSettings_color"]::-moz-placeholder', '{ color: green !important; }')
+    addCssRule: function(selectorText, cssRule){
+      document.styleSheets[0].insertRule(selectorText + cssRule, 0);
+    },    
+
+    // helper specifically for the [ main notice] pre code color
+    // usage: Typer.colorizePreCode( 'pre#main-notice-pre.dynamic', 'purple' )
+    // TODO/R: after quick thnk, we could also add a dedicated fcn for the main notice pre code colorizing, as well as a slightly more generic 'colorize' fcn that wouldn't add anything :before ... but { color: }
+    colorizePreCode: function(selectorText, color){
+      //this.removeCssRule('pre#main-notice-pre.dynamic' + '::before');
+      //this.addCssRule('pre#main-notice-pre.dynamic' + '::before', '{ color: ' + 'purple' + ' !important; }');
+      this.removeCssRule( selectorText + '::before');
+      this.addCssRule( selectorText + '::before', '{ color: ' + color + ' !important; }');
+    },
+
+    // helper specifically for the input placeholders colors :)
+    // usage: Typer.colorizeInputPlaceholder('input.dynamic[name="promptSettings_color"]', '#00DBFF');
+    colorizeInputPlaceholder: function(selectorText, color){ //TODO: replace static stuff by selectorText
+      this.removeCssRule(selectorText + '::-moz-placeholder'); // remove css rule for selector's placeholder ( will reset  all its properties )
+      this.addCssRule(selectorText + '::-moz-placeholder', '{ color: ' + color + ' !important; }'); // add a new css rule setting the ( dynamic ) color for that input's placeholder
+    },
+
+    // helper that could reveal itself quite useful when looking for an some input's placeholder color
+    // R: in our case, to have our original value displayed, we just use the original one instead of getting back the old one as rgb or hex ( -> it 'd mean too much to add a hex/rgb-to-std-css-named-color*)
+    //    *although, it'd be pretty nice to have in a toolbox ;P
+    getInputPlaceholderColor: function(selectorText){
+      //return window.getComputedStyle( document.querySelector('input.dynamic[name="promptSettings_color"]'), '::-moz-placeholder').getPropertyValue('color');
+      return window.getComputedStyle( document.querySelector('input.dynamic[name="promptSettings_color"]'), '::-moz-placeholder').color; // shorter & works :) // TODO: replace static stuff by selectorText
+      // nb: currently returns the color as rgb ( aka "rgb(0, 219, 255)" for #00DBFF )
+      // thus, a little conversion 'd be need here to get the hexadecimal value back :) -> we could also use the "rgb(0, 219, 255)" as the 'preview colored text' after the grayish valu user has typed
+    },
+    
+    // helper specifically for input placeholders colored 'after' content - ex: #00DBFF ( preview ) :D => digg notes on paper ( 'Sol0' ) to maybe found a hack around on this ( .. )
+    colorizeInputPlaceholderAfter: function(){},
+
+    // when clicking on the 'main' OK button ( at the bottom of the prompt )
+    validateSettingsPrompt: function(){
+      // hide the prompt /* HEEEERE */
+      this.hideSettingsPrompt(); /* WIP: desactivted until I added a keyboard shortcut to display/hide the prompt or merged te code with the original page's one from Haker Typer ( .. )*/
+      // R: while we don't hide the prompt to be able to see the changes instantly ( aka, without the prompt hiding itself ), all the updates are still done below ( .. )
+      // validate the speed
+      if ( document.querySelector('input[name="promptSettings_speed"]').value.length != 0 ){ // a speed is present as value
+         // set value as placeholder
+        document.querySelector('input[name="promptSettings_speed"]').placeholder = document.querySelector('input[name="promptSettings_speed"]').value;
+        // update Typer.speed
+        this.speed = document.querySelector('input[name="promptSettings_speed"]').placeholder;
+      }
+      // validate the color
+      if ( document.querySelector('input[name="promptSettings_color"]').value.length != 0 ){ // a speed is present as value
+         // set value as placeholder
+        document.querySelector('input[name="promptSettings_color"]').placeholder = document.querySelector('input[name="promptSettings_color"]').value;
+        
+        // extra step(s) for the color: we can mod the placeholder color as well as the 'main notice' one ( or, maybe if possible, just a part of it ? ), and/or the <p> used as input question text ?
+        //                              we could also mod the value's color 'as we type', but I don't know [yet] the 'visual counterpart' to this 'fisnighing polish' ( .. )
+        // neat Thnk: element.style["webkit" + property] = value;
+        // following is not working yet, to try: 'input[type=text]::-moz-placeholder'
+        //document.querySelector('input[name="promptSettings_color"]').style['::-webkit-input-placeholder color'] = document.querySelector('input[name="promptSettings_color"]').placeholder;
+        //document.querySelector('input[name="promptSettings_color"]').style[':-moz-placeholder color'] = document.querySelector('input[name="promptSettings_color"]').placeholder; /* Firefox 18- */
+        //document.querySelector('input[name="promptSettings_color"]').style['::-moz-placeholder color'] = document.querySelector('input[name="promptSettings_color"]').placeholder; /* Firefox 19+ */
+        //
+        // R: the above didn't work, my wrapper(s) do ! :D TODO: use .dynamic in the below -> changed but untested yet
+        this.colorizeInputPlaceholder('input.dynamic[name="promptSettings_color"]', document.querySelector('input[name="promptSettings_color"]').value);
+        // nb: yes, I could have also written one more layer of 'wrappers leveling' as this.colorPlaceholder('input[name="promptSettings_color"]') that 'd auto get the corresponding .value ( .. )
+        
+        // neat extra step: change the color of the code residing in the main notice pre to preview the new console prompt color if changed are saved
+        Typer.colorizePreCode( 'pre#main-notice-pre.dynamic', document.querySelector('input[name="promptSettings_color"]').value ); // #DBFF #BADA55 ;p 
+
+        // update Typer.speed
+        this.color = document.querySelector('input[name="promptSettings_color"]').placeholder;
+      }
+      // validate the url
+      if ( document.querySelector('input[name="promptSettings_url"]').value.length != 0 ){ // a speed is present as value
+         // set value as placeholder
+        document.querySelector('input[name="promptSettings_url"]').placeholder = document.querySelector('input[name="promptSettings_url"]').value;
+        // update Typer.speed
+        this.url = document.querySelector('input[name="promptSettings_url"]').placeholder;
+      }
+
+      // clean the prompt
+      this.cleanPromptSettings();
+      console.log('Typer > settings prompt validated');
+      //console.log('Typer > R: hideSettingsPrompt() is COMMENTED OUT');
+    },
+
+    // when clicking on the 'main' Cancel button ( at the bottom of the prompt ) => R: now replaced by 'Typer.dirtySettingsCheck()' for the onkeyup !
+    discardSettingsPrompt: function(){
+      // hide the prompt
+      this.hideSettingsPrompt();
+      // clean the prompt
+      this.cleanPromptSettings();
+      console.log('Typer > settings prompt discarded');
+    },
+
+    // get the current Typer settings & use them as placeholders while emptying the prompt'sinput  fields -> already done when validating ;D
+    populatePromptSettings: function(){
+      
+    },
+
+    // empty the prompt's input  fields
+    cleanPromptSettings: function(){
+      // clean speed
+      document.querySelector('input[name="promptSettings_speed"]').value = '';
+      // clean color
+      document.querySelector('input[name="promptSettings_color"]').value = '';
+      // clean url
+      document.querySelector('input[name="promptSettings_url"]').value = '';
+    },
+    
+    // enable the keyboard keys handling while we show our settings prompt
+    enableKeysHandling: function(){
+      // relies on jquery, as the original Hacker Typer script ( may be written is pure js in the future ( .. ) )
+      $(document).keydown(function (event) { this.addText(event); /*Capture the keydown event and call the addText*/ } );
+    },
+
+    // disable the keyboard keys handling while we hide our settings prompt
+    disableKeysHandling: function(){
+      // relies on jquery, as the original Hacker Typer script ( may be written is pure js in the future ( .. ) )
+      $(document).keydown(function (event) { /* don't override default behavior */ } );
+    }
+  }
+
+  // init my Typer mod
+  Typer.initSettingsPrompt();
+
+
+
+  /*
+  stagPrompt() - helper fcn to generate a functional prompt quickly
+  usage: 
+  stagPrompt( {title: 'tefPrompt', submitButtons: ["Lol", "Fuck"] }, function(data){console.log('Data from submit callback:'); console.log(data);} );
+
+  extrapolated usage ( R/WARN: DOESN'T have the css necessary for the below stuff, but it indeed works as intended ;P ):
+  stagPrompt( { title: 'tefPrompt', 
+              fields: [
+                { type: 'button', value: 'TestBtn', name: 'myBtn', id: 'myBtnId', className: 'myBtnClassName', text: 'above text', hintText: 'overlay hint text' },
+                { type: 'checkbox', value: 'TestCheck', name: 'myCheck', id: 'myCheckId', className: 'myCheckClassName', text: 'above text', hintText: 'overlay hint text' },
+                { type: 'color', text: 'above text', hintText: 'overlay hint text' },
+                { type: 'range', value: 'TestBtn', name: 'myBtn', id: 'myBtnId', className: 'myBtnClassName', text: 'above text', hintText: 'overlay hint text' },
+                { type: 'radio', value: 'TestBtn', name: 'myBtn', id: 'myBtnId', className: 'myBtnClassName', text: 'above text', hintText: 'overlay hint text' },
+              ],
+              submitButtons: ["Lol", "yolo", "Neat"]
+             });
+
+  R: basic principle
+
+  function passMeArgAndCallback(arg, callback){
+  if(arg) console.log('arg:' + arg);
+  if(callback){
+    console.log('callback:' + callback);
+    callback();
+  }
+}
+undefined
+passMeArgAndCallback( '0', function(){ setTimeout(function(){console.log('lol tef');}, 3000); });
+
+  */
+  var stagPrompt = function(promptObj, callbackFcn){
+    // default params
+    this.title = 'stagPrompt';
+    this.showTitle =  false;
+    this.submitButtons = ['Cancel', 'Ok']; // default choices for 'main' prompt buttons ( bottom ones )
+    this.submitButton = 0;                 // button which was clicked - default to 0, set to 'Cancel' || 'Ok' ( using data-prompt_submit )
+    //this.mainCallback = true;
+    this.fields = [];                      // fields to be created in the prompt
+    // check if we were passed a promptObj to override some of the defaults params
+    if (promptObj){
+      // if we were passed a title, use it
+      if( promptObj.title ) this.title = promptObj.title;
+      // if we need to display a title, set it
+      if( promptObj.showTitle ) this.showTitle = promptObj.showTitle;
+      // if we were passed (a) field(s), get it/them
+      if( promptObj.fields ) this.fields = promptObj.fields;
+      // if we were passed (a) 'main' submit button(s), get it/them - for the moment strings only & only common callback fcn
+      if( promptObj.submitButtons ) this.submitButtons = promptObj.submitButtons;
+    }
+
+    // default callback
+    this.callback = function(data){ 
+      console.log('Default Callback => data:');
+      console.log(data);
+    };
+    // check if we were passed a callback function to override the default one ( right above ) 
+    if (callbackFcn){
+      this.callback = callbackFcn;
+    }
+    
+    // init & populate/add the necessary
+    // show or not a title
+    // show or not a 'main' notice
+
+    var that = this; // use by both of the below fcns
+    // for each field, create & add the corresponding input depending on the typ desired ( as well as set the id, class, & data stuff if specified .. ?)
+    this.fields.forEach(function(item){
+       // create a button & add an event listener to it that 'd call the callback & pass it an obj as parameter
+      var field = document.createElement('input');
+      if(item.id) field.id = item.id;
+      if(item.className) field.className += ' ' + item.className;
+      if(item.name) field.name = item.name;
+      if(item.required) field.required = true;
+      //if(item.text) ;                   // above text
+      //if(item.hintText) ;                   // hint text
+      if(item.value) field.value = item.value;                   // value text
+      if(item.placeholder) field.placeholder = item.placeholder; // placeholder text
+      // TODO: handle data-.. as well ?
+      if(item.type) field.type = item.type; // kinda mandatory
+      
+      /*
+        TODO: maybe modify the code below to handle things ~like the 'main' buttons --> aka dedicated callbacks that are passed stg where is stored the value & stuf [AND THE ABILITY TO 'UPDATE' THE FIELD ?]
+
+      //this.submitter.onclick = this.callback({title: this.title, submitButton: this.submitButtons });
+      submitter.onclick = function(evt){
+        that.callback({title: 'tef', submit: item});
+        submitter.parentElement.removeChild( submitter );
+      };
+      */
+      console.log('field:');
+      console.log(field);
+      console.log('item:');
+      console.log(item);
+      document.body.appendChild( field );
+    });
+
+    // for each submitButtons item, create & add the corresponding button(s) + the click listener
+    /*  
+      POC: working code, single button
+    
+    // init 'main' button(s) ( bottom one(s) ), aka create it/them & add a click listener 
+    // create a button
+    // add an event listener to it that 'd call the callback & pass it an obj as parameter
+    this.submitter = document.createElement('button');
+    this.submitter.id = 'stagPrompt'
+    this.submitter.appendChild( document.createTextNode("Ok") ); 
+    //this.submitter.onclick = this.callback({title: this.title, submitButton: this.submitButtons });
+    var that = this;
+    this.submitter.onclick = function(evt){
+      that.callback({title: 'tef', submit: 'Ok'});
+      that.submitter.parentElement.removeChild( that.submitter );
+    };
+    document.body.appendChild( this.submitter );
+    */
+    
+    this.submitButtons.forEach(function(item){
+       // create a button & add an event listener to it that 'd call the callback & pass it an obj as parameter
+      var submitter = document.createElement('button');
+      submitter.id = item;
+      submitter.appendChild( document.createTextNode(item) ); 
+      //this.submitter.onclick = this.callback({title: this.title, submitButton: this.submitButtons });
+      submitter.onclick = function(evt){
+        that.callback({title: 'tef', submit: item});
+        submitter.parentElement.removeChild( submitter );
+      };
+      document.body.appendChild( submitter );
+    });
+  }
+</script>
+
+</body>
+</html>
